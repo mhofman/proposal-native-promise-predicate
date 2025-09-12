@@ -1,50 +1,36 @@
-# template-for-proposals
+# [Promise.isPromise]()
 
-A repository template for ECMAScript proposals.
+ECMAScript proposal and spec for `Promise.isPromise`.
 
-## Before creating a proposal
+## Status
 
-Please ensure the following:
-  1. You have read the [process document](https://tc39.github.io/process-document/)
-  1. You have reviewed the [existing proposals](https://github.com/tc39/proposals/)
-  1. You are aware that your proposal requires being a member of TC39, or locating a TC39 delegate to “champion” your proposal
+[The TC39 Process](https://tc39.es/process-document/)
 
-## Create your proposal repo
+**Stage**: 0
 
-Follow these steps:
-  1. Click the green [“use this template”](https://github.com/tc39/template-for-proposals/generate) button in the repo header. (Note: Do not fork this repo in GitHub's web interface, as that will later prevent transfer into the TC39 organization)
-  1. Update ecmarkup and the biblio to the latest version: `npm install --save-dev ecmarkup@latest && npm install --save-dev --save-exact @tc39/ecma262-biblio@latest`.
-  1. Go to your repo settings page:
-      1. Under “General”, under “Features”, ensure “Issues” is checked, and disable “Wiki”, and “Projects” (unless you intend to use Projects)
-      1. Under “Pull Requests”, check “Always suggest updating pull request branches” and “automatically delete head branches”
-      1. Under the “Pages” section on the left sidebar, and set the source to “deploy from a branch”, select “gh-pages” in the branch dropdown, and then ensure that “Enforce HTTPS” is checked.
-      1. Under the “Actions” section on the left sidebar, under “General”, select “Read and write permissions” under “Workflow permissions” and click “Save”
-  1. [“How to write a good explainer”][explainer] explains how to make a good first impression.
+**Champions**:
+- Mathieu Hofman ([@mhofman](https://github.com/mhofman)) (Agoric)
 
-      > Each TC39 proposal should have a `README.md` file which explains the purpose
-      > of the proposal and its shape at a high level.
-      >
-      > ...
-      >
-      > The rest of this page can be used as a template ...
+## Motivation
 
-      Your explainer can point readers to the `index.html` generated from `spec.emu`
-      via markdown like
+It is currently impossible to check whether an object is a native promise without side effects. The usual pattern is to test whether `Promise.resolve(val) === val`, but in the negative case it creates a new promise resolved from `val`. Besides the unnecessary allocation, it may also trigger user-code related to the [thenable assimilation mechanism](https://promisesaplus.com/#the-then-method).
 
-      ```markdown
-      You can browse the [ecmarkup output](https://ACCOUNT.github.io/PROJECT/)
-      or browse the [source](https://github.com/ACCOUNT/PROJECT/blob/HEAD/spec.emu).
-      ```
+Code that wants to be defensive, for example avoid synchronous re-entrancy when handling unknown values in async logic, can currently only do so by paying the cost of a tick (`Promise.resolve().then(() => val)`), even when the value is a safe native promise.
 
-      where *ACCOUNT* and *PROJECT* are the first two path elements in your project's Github URL.
-      For example, for github.com/**tc39**/**template-for-proposals**, *ACCOUNT* is “tc39”
-      and *PROJECT* is “template-for-proposals”.
+Native promises have their internal state safely adopted when doing `await val`, and if https://github.com/tc39/ecma262/pull/3689 is accepted, for other promise resolution paths.
 
+`instanceof Promise` is not appropriate because that checks whether `Promise.prototype` is in the prototype chain of value, not whether the value passes the the `IsPromise` checks the spec performs internally.
 
-## Maintain your proposal repo
+## Proposal
 
-  1. Make your changes to `spec.emu` (ecmarkup uses HTML syntax, but is not HTML, so I strongly suggest not naming it “.html”)
-  1. Any commit that makes meaningful changes to the spec, should run `npm run build` to verify that the build will succeed and the output looks as expected.
-  1. Whenever you update `ecmarkup`, run `npm run build` to verify that the build will succeed and the output looks as expected.
+A new `Promise.isPromise` predicate that exposes the result of the [`IsPromise`](https://tc39.es/ecma262/#sec-ispromise) abstract operation.
 
-  [explainer]: https://github.com/tc39/how-we-work/blob/HEAD/explainer.md
+## Precedent
+
+[`Error.isError`](https://github.com/tc39/proposal-is-error) does a similar brand check for native `Error` objects.
+
+## Membrane transparency
+
+Like `Error`, `Promise`s are also objects which are better "passed by copy" than proxied through membranes. Furthermore, it is already possible to asynchronously detect whether an object is a native promise or not through `Promise.resolve()`.
+
+A `Promise.isPromise` predicate would actually let membranes detect promise values which should be recreated on the other side.
