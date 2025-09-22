@@ -3,10 +3,14 @@
   "name": "proposal-native-promise-predicate",
   "scripts": {
     "start": "npm run build-loose -- --watch",
-    "build": "npm run build-loose -- --strict",
+    "build": "npm run build:spec && npm run build:slides",
+    "build:spec": "npm run build-loose -- --strict",
+    "build:slides": "for i in $(cd slides; ls -1 *.md); do slidev build --out ../build/slides/${i%.md} --base /proposal-native-promise-predicate/slides/${i%.md}/ slides/$i; done",
     "build-loose": "node -e 'fs.mkdirSync(\"build\", { recursive: true })' && ecmarkup --load-biblio @tc39/ecma262-biblio --verbose spec.emu build/index.html --lint-spec"
   },
   "devDependencies": {
+    "@slidev/cli": "^52.2.4",
+    "@slidev/theme-default": "^0.25.0",
     "@tc39/ecma262-biblio": "2.1.2946",
     "ecmarkup": "^21.3.1",
     "jsdom": "^26.1.0",

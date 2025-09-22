@@ -1,0 +1,19 @@
+:root {
+    --slidev-code-font-size: 13px;
+    font-variant-ligatures: none;
+}
+
+/* Simple transitions for code block highlights */
+.slidev-code {
+    .line {
+        transition: all 0.3s ease;
+    }
+
+    .slidev-code-dishonored {
+        opacity: 0.2;
+    }
+}
+
+.slidev-vclick-target {
+  transition: all 300ms ease;
+}
